@@ -1,0 +1,23 @@
+#!/usr/bin/python
+from poetry import molgen
+import os
+import string
+import math
+import re
+import random
+
+lx=150
+ly=150
+lz=150
+
+
+
+mol0=molgen.Molecule("hard-wrap.reimage.xml", 7900)
+mol1=molgen.Molecule("vesicle1.xml", 90000)
+
+
+gen=molgen.Generators(lx, ly, lz) # box size in x, y, and z directions
+gen.addMolecule(mol0, 1)
+gen.addMolecule(mol1, 1)
+gen.outPutXML("endo")
+
