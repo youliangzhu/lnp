@@ -1,0 +1,89 @@
+#!/usr/bin/python
+from poetry import molgen
+import os
+import string
+import math
+import re
+import random
+
+lx=40
+ly=40
+lz=40
+npp = 4000
+num_cro_linking=20000
+mol0=molgen.Molecule(1)
+mol0.setParticleTypes("G")
+mol0.setSphere(0.0, 0.0, 0.0, 0.0, 10.0)
+
+gen0=molgen.Generators(lx,ly,lz)
+gen0.addMolecule(mol0, npp)
+gen0.setParam("G", "G", 1.0, 0.95, 3.0)
+gen0.setMinimumDistance(0.9)
+gen0.outPutXML("np")
+
+nppfile="np.xml"
+xml=open(nppfile)
+pos=[]
+k=0
+for line in xml:
+	if k>=5 and k<=npp+4:
+		lin=line.strip('\n')
+		la=re.split('	| ',lin)
+		lb=[]
+		for i in range(0,len(la)):
+			if (la[i]!=' ' and la[i]!=''):
+				lb.append(la[i])
+		pos.append([float(lb[0]), float(lb[1]), float(lb[2])])
+	k+=1
+
+#find highest and lowest particle in z direction
+zlow=0.0
+zlowid=0
+zhig=0.0
+zhigid=0
+for i in range(0, npp):
+	z = pos[i][2]
+	if z > zhig:
+		zhig=z
+		zhigid=i
+	if z<zlow:
+		zlow=z
+		zlowid=i
+
+print(zhig, zhigid, zlow, zlowid)
+ncr=0
+for i in range(0, npp):
+	for j in range(0, npp):
+		if j>i+5 or j<i-5:
+			dx = pos[i][0] - pos[j][0]
+			dy = pos[i][1] - pos[j][1]	
+			dz = pos[i][2] - pos[j][2]
+			r = math.sqrt(dx*dx + dy*dy + dz*dz)
+			if r<1.2:
+				ncr += 1
+
+topology=''
+prob = float(num_cro_linking)/float(ncr)
+print (ncr)
+ncr=0
+for i in range(0, npp):
+	for j in range(0, npp):
+		if j>i+5 or j<i-5:
+			dx = pos[i][0] - pos[j][0]
+			dy = pos[i][1] - pos[j][1]	
+			dz = pos[i][2] - pos[j][2]
+			r = math.sqrt(dx*dx + dy*dy + dz*dz)
+			if r<1.2 and random.random() < prob:
+				topology += str(i)+"-"+str(j)+","
+				ncr += 1				
+print (ncr)
+
+
+mol1=molgen.Molecule(nppfile, npp)
+mol1.setTopology(topology)
+
+
+gen1=molgen.Generators(lx,ly,lz)
+gen1.addMolecule(mol1,1)
+gen1.outPutXML("npc")
+
