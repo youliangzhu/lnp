@@ -1,0 +1,68 @@
+#!/usr/bin/python
+from poetry import molgen
+import os
+import string
+import math
+import re
+import random
+
+
+lz=100
+
+
+nx=120
+ny=140
+n=nx*ny
+d=0.8
+pos=[]
+typ=[]
+rc=10.0
+h=d*math.sqrt(3.0)/2.0
+lx=float(nx)*d
+ly=float(ny)*h
+
+for i in range(0,ny):
+	x = -lx/2.0
+	if i%2==1:
+		x = d/2.0-lx/2.0
+	y=i*h - ly/2.0
+	for j in range(0,nx):
+		r = math.sqrt(x*x + y*y)
+		if r>rc:
+			pos.append([x, y, 0.0])
+			typ.append('W')
+		x += d
+n=len(pos)
+for i in range(0,n):
+	posi=pos[i]
+	px = posi[0]
+	py = posi[1]
+	pos[i] = [px, py, 0.0]
+
+opd=open("plane.xml","w")		
+opd.write('<?xml version ="1.0" encoding ="UTF-8" ?>\n')
+opd.write('<galamost_xml version="1.3">\n')
+opd.write('<configuration time_step="0" dimensions="3" natoms="'+str(len(pos))+'" >\n')
+opd.write('<box lx="'+str(lx)+'" ly="'+str(ly)+'" lz="'+str(lz)+'"/>\n')
+opd.write('<position num="'+str(len(pos))+'">\n')
+for i in range(0, len(pos)):
+	opd.write(str(pos[i][0])+"	"+str(pos[i][1])+"	"+str(pos[i][2])+"\n")
+opd.write('</position>\n')
+opd.write('<type num="'+str(len(typ))+'">\n')
+for i in range(0, len(typ)):
+	opd.write(typ[i]+"\n")
+opd.write('</type>\n')
+opd.write('</configuration>\n')
+opd.write('</galamost_xml>\n')
+opd.close()
+
+mol0=molgen.Molecule("plane.xml", n)
+mol1=molgen.Molecule("soft-wrap.reimage.xml", 10000)
+
+
+
+gen=molgen.Generators(lx, ly, lz) # box size in x, y, and z directions
+gen.addMolecule(mol0, 1)
+gen.addMolecule(mol1, 1)
+gen.outPutXML("tran")
+
